@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Writing Recognizer</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- MediaPipe libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Small camera preview -->
+        <div class="video-preview">
+            <video class="input_video" autoplay playsinline></video>
+        </div>
+
+        <!-- PERMANENT drawing canvas -->
+        <canvas class="drawing_canvas"></canvas>
+
+        <!-- Overlay canvas (for hand skeleton, finger indicator) -->
+        <canvas class="output_canvas"></canvas>
+
+        <!-- Controls -->
+        <div class="controls">
+
+            <div class="color-picker">
+                <button class="color-btn active" data-color="#000000" style="background-color:#000000;">
+                </button>
+
+                <button class="color-btn" data-color="#FF0000" style="background-color:#FF0000;">
+                </button>
+
+                <button class="color-btn" data-color="#00FF00" style="background-color:#00FF00;">
+                </button>
+
+                <button class="color-btn" data-color="#0000FF" style="background-color:#0000FF;">
+                </button>
+            </div>
+
+            <button id="clear-btn">Clear Canvas</button>
+
+        </div>
+
+        <!-- Status -->
+        <div class="status-indicator">
+            Initializing...
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
