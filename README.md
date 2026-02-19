@@ -26,6 +26,11 @@ The index fingertip acts as a virtual pen.
 The strokes are rendered onto an HTML canvas.
 Users can select between 4 different colors.
 
+**Things yet to develop**
+understand the character wriiten on canvas
+if equations are given the system recognize the charaters
+PLot the graph for given expression
+
 **Author**
 Rohith
 Computer Vision | Web-Based AI Interfaces | Engineering Project
