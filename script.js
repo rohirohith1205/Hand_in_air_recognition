@@ -60,15 +60,10 @@ const hands = new Hands({
 
 
 hands.setOptions({
-
     maxNumHands: 1,
-
-    modelComplexity: 1,
-
-    minDetectionConfidence: 0.5,
-
-    minTrackingConfidence: 0.5
-
+    modelComplexity: 0,           // lighter model → faster re-detection
+    minDetectionConfidence: 0.4,  // lower → picks up hand sooner on re-entry
+    minTrackingConfidence: 0.4
 });
 
 
@@ -112,13 +107,12 @@ function onResults(results) {
 
 
     // If no hand → reset drawing
-    if (!results.multiHandLandmarks) {
+    // MediaPipe always gives an array, so check length not truthiness
+    if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
         isDrawing = false;
         lastX = null;
         lastY = null;
-
         statusIndicator.textContent = "Show hand";
-
         return;
     }
 
