@@ -25,6 +25,7 @@ Drawing mode activates.
 The index fingertip acts as a virtual pen.
 The strokes are rendered onto an HTML canvas.
 Users can select between 4 different colors.
+Users can also select scribble option to scribble on convas via mouse pad or dragging on screen
 
 **Things yet to develop**
 understand the character wriiten on canvas
