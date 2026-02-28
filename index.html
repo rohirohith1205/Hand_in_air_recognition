@@ -4,9 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Air Writing Recognizer</title>
+    <title>Hand-in-Air — Air Writing Character Recognizer</title>
+    <meta name="description"
+        content="Hand-in-Air: A futuristic air-writing character recognizer using webcam hand gestures and AI prediction.">
 
-    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <!-- MediaPipe libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -15,52 +25,210 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="container">
-
-        <!-- Small camera preview -->
-        <div class="video-preview">
-            <video class="input_video" autoplay playsinline></video>
+    <!-- ═══════════════ TOP HEADER BAR ═══════════════ -->
+    <header id="header-bar">
+        <div class="header-left">
+            <div class="logo" id="logo">
+                <span class="logo-icon">✋</span>
+                <span class="logo-text">Hand-in-Air</span>
+            </div>
         </div>
 
-        <!-- PERMANENT drawing canvas -->
-        <canvas class="drawing_canvas"></canvas>
-
-        <!-- Overlay canvas (for hand skeleton, finger indicator) -->
-        <canvas class="output_canvas"></canvas>
-
-        <!-- Controls -->
-        <div class="controls">
-
-            <div class="color-picker">
-                <button class="color-btn active" data-color="#000000" style="background-color:#000000;">
+        <div class="header-center">
+            <div class="mode-toggle" id="mode-toggle">
+                <button class="mode-btn active" id="btn-air-draw" data-mode="air-draw">
+                    <i data-lucide="pen-tool" class="mode-icon"></i>
+                    Air Draw
                 </button>
-
-                <button class="color-btn" data-color="#FF0000" style="background-color:#FF0000;">
+                <button class="mode-btn" id="btn-scribble" data-mode="scribble">
+                    <i data-lucide="edit-3" class="mode-icon"></i>
+                    Scribble
                 </button>
+            </div>
+        </div>
 
-                <button class="color-btn" data-color="#00FF00" style="background-color:#00FF00;">
+        <div class="header-right">
+            <button class="header-icon-btn" id="btn-save" title="Save">
+                <i data-lucide="save"></i>
+            </button>
+            <button class="header-icon-btn" id="btn-download" title="Download">
+                <i data-lucide="download"></i>
+            </button>
+            <button class="header-icon-btn" id="btn-theme" title="Toggle Theme">
+                <i data-lucide="moon"></i>
+            </button>
+            <div class="avatar" id="user-avatar">
+                <i data-lucide="user"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════ MAIN LAYOUT ═══════════════ -->
+    <main id="main-layout">
+
+        <!-- ──── LEFT SIDEBAR ──── -->
+        <aside id="left-sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title color-title">COLOR</h3>
+                <div class="color-picker" id="color-picker">
+                    <button class="color-swatch active" data-color="#00e5ff" style="--swatch-color: #00e5ff;"
+                        title="Cyan"></button>
+                    <button class="color-swatch" data-color="#448aff" style="--swatch-color: #448aff;"
+                        title="Blue"></button>
+                    <button class="color-swatch" data-color="#7c4dff" style="--swatch-color: #7c4dff;"
+                        title="Purple"></button>
+                    <button class="color-swatch" data-color="#e040fb" style="--swatch-color: #e040fb;"
+                        title="Magenta"></button>
+                    <button class="color-swatch" data-color="#ff4081" style="--swatch-color: #ff4081;"
+                        title="Pink"></button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title size-title">SIZE</h3>
+                <div class="size-picker" id="size-picker">
+                    <button class="size-dot" data-size="2" title="2px">
+                        <span class="dot" style="width:6px; height:6px;"></span>
+                    </button>
+                    <button class="size-dot active" data-size="4" title="4px">
+                        <span class="dot" style="width:10px; height:10px;"></span>
+                    </button>
+                    <button class="size-dot" data-size="8" title="8px">
+                        <span class="dot" style="width:16px; height:16px;"></span>
+                    </button>
+                    <button class="size-dot" data-size="14" title="14px">
+                        <span class="dot" style="width:22px; height:22px;"></span>
+                    </button>
+                </div>
+                <div class="current-size-label" id="current-size-label">4px</div>
+            </div>
+
+            <!-- Webcam Preview (small mirrored) -->
+            <div class="sidebar-section webcam-section">
+                <h3 class="sidebar-title">PREVIEW</h3>
+                <div class="video-preview" id="video-preview">
+                    <video class="input_video" id="webcam-video" autoplay playsinline></video>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ──── CENTER — DRAWING CANVAS ──── -->
+        <section id="canvas-area">
+            <div class="canvas-wrapper" id="canvas-wrapper">
+                <!-- Drawing canvas (permanent strokes) -->
+                <canvas class="drawing_canvas" id="drawing-canvas"></canvas>
+
+                <!-- Overlay canvas (hand skeleton, indicators) -->
+                <canvas class="output_canvas" id="overlay-canvas"></canvas>
+
+                <!-- Placeholder (shown before camera starts) -->
+                <div class="canvas-placeholder" id="canvas-placeholder">
+                    <i data-lucide="video" class="placeholder-icon"></i>
+                    <p class="placeholder-title">Camera Feed</p>
+                    <p class="placeholder-sub">Draw on the canvas to begin</p>
+                </div>
+
+                <!-- Canvas status overlay -->
+                <div class="canvas-status" id="canvas-status">
+                    <span class="status-ready" id="status-indicator">
+                        <span class="status-dot green"></span>
+                        READY
+                    </span>
+                    <span class="status-size" id="status-size">
+                        <span class="status-dot pink"></span>
+                        4px
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ──── RIGHT SIDEBAR ──── -->
+        <aside id="right-sidebar">
+            <!-- AI Prediction Panel -->
+            <div class="panel" id="panel-prediction">
+                <div class="panel-header">
+                    <div class="panel-icon blue-orb">
+                        <i data-lucide="brain"></i>
+                    </div>
+                    <h3 class="panel-title">AI PREDICTION</h3>
+                </div>
+                <div class="panel-body prediction-body" id="prediction-body">
+                    <p class="panel-placeholder">Draw to see prediction...</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" id="action-buttons">
+                <button class="action-btn solve-btn" id="btn-solve">
+                    <i data-lucide="sparkles"></i>
+                    Solve
                 </button>
-
-                <button class="color-btn" data-color="#0000FF" style="background-color:#0000FF;">
+                <button class="action-btn plot-btn" id="btn-plot">
+                    <i data-lucide="bar-chart-3"></i>
+                    Plot
                 </button>
             </div>
 
-            <button id="clear-btn">Clear Canvas</button>
+            <!-- Solution Steps Panel -->
+            <div class="panel" id="panel-solution">
+                <div class="panel-header">
+                    <div class="panel-icon purple-orb">
+                        <i data-lucide="list-ordered"></i>
+                    </div>
+                    <h3 class="panel-title">SOLUTION STEPS</h3>
+                </div>
+                <div class="panel-body solution-body" id="solution-body">
+                    <div class="panel-placeholder-row">
+                        <span>Press Solve to begin</span>
+                        <i data-lucide="chevron-right"></i>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Graph Output Panel -->
+            <div class="panel" id="panel-graph">
+                <div class="panel-header">
+                    <div class="panel-icon cyan-orb">
+                        <i data-lucide="line-chart"></i>
+                    </div>
+                    <h3 class="panel-title">GRAPH OUTPUT</h3>
+                </div>
+                <div class="panel-body graph-body" id="graph-body">
+                    <div class="panel-placeholder graph-placeholder">
+                        <i data-lucide="bar-chart-2" class="graph-icon-large"></i>
+                        <p>No graph yet</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- ═══════════════ BOTTOM BAR ═══════════════ -->
+    <footer id="bottom-bar">
+        <div class="bottom-left">
+            <span class="status-ready" id="bottom-status">
+                <span class="status-dot green"></span>
+                READY
+            </span>
+            <span class="status-size" id="bottom-size">
+                <span class="status-dot pink"></span>
+                4px
+            </span>
         </div>
-
-        <!-- Status -->
-        <div class="status-indicator">
-            Initializing...
+        <div class="bottom-right">
+            <button class="clear-btn" id="btn-clear-canvas" title="Clear Canvas">
+                <i data-lucide="trash-2"></i>
+                <span>Clear</span>
+            </button>
         </div>
-
-    </div>
+    </footer>
 
     <script src="script.js"></script>
-
 </body>
 
 </html>
