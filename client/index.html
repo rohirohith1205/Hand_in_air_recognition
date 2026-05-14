@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Hand-in-Air — Vision-based air writing recognition system with AI-powered character recognition, equation solving, and graph plotting." />
+  <title>Hand-in-Air | AI Air Writing System</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Icons: Lucide -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+  <!-- ============ APP SHELL ============ -->
+  <div id="app">
+
+    <!-- ======== HEADER ======== -->
+    <header class="header" id="header">
+      <!-- Logo -->
+      <div class="header__logo">
+        <span class="header__logo-icon">✋</span>
+        <span class="header__logo-text">Hand-in-Air</span>
+      </div>
+
+      <!-- Mode Toggle -->
+      <div class="header__modes" id="mode-toggle">
+        <button class="mode-btn active" data-mode="air" id="btn-mode-air">
+          <i data-lucide="video"></i>
+          <span>Air Draw</span>
+        </button>
+        <button class="mode-btn" data-mode="scribble" id="btn-mode-scribble">
+          <i data-lucide="pen-tool"></i>
+          <span>Scribble</span>
+        </button>
+      </div>
+
+      <!-- Actions -->
+      <div class="header__actions">
+        <button class="action-btn" id="btn-save" title="Save">
+          <i data-lucide="save"></i>
+        </button>
+        <button class="action-btn" id="btn-download" title="Download PNG">
+          <i data-lucide="download"></i>
+        </button>
+        <button class="action-btn" id="btn-undo" title="Undo">
+          <i data-lucide="undo-2"></i>
+        </button>
+        <button class="action-btn" id="btn-redo" title="Redo">
+          <i data-lucide="redo-2"></i>
+        </button>
+        <button class="action-btn action-btn--avatar" id="btn-user" title="User">
+          U
+        </button>
+      </div>
+    </header>
+
+
+    <!-- ======== LEFT SIDEBAR ======== -->
+    <aside class="sidebar-left" id="sidebar-left">
+
+      <!-- Color Picker -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.05s">
+        <div class="panel__title">
+          <i data-lucide="palette"></i>
+          Color
+        </div>
+        <div class="color-picker" id="color-picker">
+          <button class="color-swatch active" data-color="#00e5ff" style="background: #00e5ff; color: #00e5ff"
+            title="Cyan"></button>
+          <button class="color-swatch" data-color="#448aff" style="background: #448aff; color: #448aff"
+            title="Blue"></button>
+          <button class="color-swatch" data-color="#7c4dff" style="background: #7c4dff; color: #7c4dff"
+            title="Purple"></button>
+          <button class="color-swatch" data-color="#e040fb" style="background: #e040fb; color: #e040fb"
+            title="Magenta"></button>
+          <button class="color-swatch" data-color="#ff4081" style="background: #ff4081; color: #ff4081"
+            title="Pink"></button>
+          <button class="color-swatch" data-color="#ffffff" style="background: #ffffff; color: #ffffff"
+            title="White"></button>
+        </div>
+      </div>
+
+      <!-- Size Picker -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.1s">
+        <div class="panel__title">
+          <i data-lucide="circle"></i>
+          Stroke Size
+        </div>
+        <div class="size-picker" id="size-picker">
+          <button class="size-dot" data-size="2" style="width:8px; height:8px" title="2px"></button>
+          <button class="size-dot active" data-size="4" style="width:12px; height:12px" title="4px"></button>
+          <button class="size-dot" data-size="8" style="width:18px; height:18px" title="8px"></button>
+          <button class="size-dot" data-size="14" style="width:24px; height:24px" title="14px"></button>
+          <span class="size-label" id="size-label">4px</span>
+        </div>
+      </div>
+
+      <!-- Drawing Tools -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.15s">
+        <div class="panel__title">
+          <i data-lucide="mouse-pointer-2"></i>
+          Tools
+        </div>
+        <div class="tool-group">
+          <button class="tool-btn active" id="tool-draw" title="Draw">
+            <i data-lucide="pencil"></i>
+            Draw
+          </button>
+          <button class="tool-btn" id="tool-erase" title="Eraser">
+            <i data-lucide="eraser"></i>
+            Erase
+          </button>
+        </div>
+      </div>
+
+      <!-- Webcam Preview -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.2s">
+        <div class="panel__title">
+          <i data-lucide="camera"></i>
+          Camera Feed
+        </div>
+        <div class="webcam-preview" id="webcam-preview">
+          <div class="webcam-preview__placeholder" id="webcam-placeholder">
+            <i data-lucide="video-off"></i>
+            <span>Camera Off</span>
+          </div>
+          <video id="webcam-video" autoplay playsinline muted style="display:none"></video>
+        </div>
+      </div>
+
+    </aside>
+
+
+    <!-- ======== CENTER — CANVAS ======== -->
+    <main class="canvas-area" id="canvas-area">
+      <div class="canvas-container" id="canvas-container">
+        <!-- Drawing canvas -->
+        <canvas id="canvas-main" class="canvas-main"></canvas>
+        <!-- Hand tracking overlay -->
+        <canvas id="canvas-overlay" class="canvas-overlay"></canvas>
+        <!-- Placeholder message -->
+        <div class="canvas-placeholder" id="canvas-placeholder">
+          <i data-lucide="hand"></i>
+          <span class="canvas-placeholder__text">Start drawing in the air or switch to Scribble mode</span>
+          <span class="canvas-placeholder__sub">Pinch your thumb &amp; index finger to draw</span>
+        </div>
+      </div>
+
+      <!-- Canvas Status -->
+      <div class="canvas-status">
+        <div class="canvas-status__left">
+          <span class="status-dot" id="status-dot"></span>
+          <span class="status-mode" id="status-mode">AIR DRAW</span>
+          <span class="status-size" id="status-size">4px</span>
+        </div>
+        <div class="canvas-status__right">
+          <span class="status-coords" id="status-coords">x: 0 y: 0</span>
+        </div>
+      </div>
+    </main>
+
+
+    <!-- ======== RIGHT SIDEBAR ======== -->
+    <aside class="sidebar-right" id="sidebar-right">
+
+      <!-- AI Prediction -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.05s">
+        <div class="panel__title">
+          <i data-lucide="brain"></i>
+          AI Prediction
+        </div>
+        <div class="prediction-display" id="prediction-display">
+          <div class="prediction-char" id="prediction-char">?</div>
+          <div class="prediction-confidence" id="prediction-confidence">
+            Confidence: <span>—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expression Builder -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.1s">
+        <div class="panel__title">
+          <i data-lucide="calculator"></i>
+          Expression
+        </div>
+        <div class="expression-display" id="expression-display">
+          <span class="cursor-blink"></span>
+        </div>
+        <div class="expression-controls">
+          <button class="expr-btn" id="btn-predict" title="Capture & predict current stroke">Predict</button>
+          <button class="expr-btn" id="btn-backspace" title="Delete last character">⌫ Del</button>
+          <button class="expr-btn" id="btn-clear-expr" title="Clear expression">Clear</button>
+        </div>
+      </div>
+
+      <!-- Solve & Plot -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.15s">
+        <div class="panel__title">
+          <i data-lucide="sparkles"></i>
+          Actions
+        </div>
+
+        <!-- Equation Text Input -->
+        <div class="equation-input-group" style="margin-bottom: 10px">
+          <input type="text" class="equation-input" id="equation-input" placeholder="Or type equation..."
+            autocomplete="off" spellcheck="false" />
+          <button class="btn-steps-toggle" id="btn-steps-toggle" title="Toggle step-by-step">Steps</button>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-solve" id="btn-solve">
+            <i data-lucide="equal"></i>
+            Solve
+          </button>
+          <button class="btn-plot" id="btn-plot">
+            <i data-lucide="line-chart"></i>
+            Plot
+          </button>
+        </div>
+      </div>
+
+      <!-- Solution -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.2s">
+        <div class="panel__title">
+          <i data-lucide="check-circle-2"></i>
+          Solution
+        </div>
+        <div class="solution-area" id="solution-area">
+          <div class="solution-result" id="solution-result" style="display:none"></div>
+          <div class="solution-steps" id="solution-steps" style="display:none"></div>
+          <div class="graph-placeholder" id="solution-placeholder">
+            <i data-lucide="sigma"></i>
+            <span>Solution will appear here</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graph -->
+      <div class="panel animate-fade-in" style="animation-delay: 0.25s">
+        <div class="panel__title">
+          <i data-lucide="area-chart"></i>
+          Graph
+        </div>
+        <div class="graph-area" id="graph-area">
+          <div class="graph-placeholder" id="graph-placeholder">
+            <i data-lucide="trending-up"></i>
+            <span>Plot will appear here</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+
+    <!-- ======== FOOTER ======== -->
+    <footer class="footer" id="footer">
+      <div class="footer__left">
+        <span class="status-dot" id="footer-status-dot"></span>
+        <span id="footer-status-text">Ready</span>
+      </div>
+      <div class="footer__right">
+        <button class="footer__clear-btn" id="btn-clear-canvas" title="Clear canvas">
+          <i data-lucide="trash-2"></i>
+          Clear Canvas
+        </button>
+        <span class="footer__version">v1.0.0</span>
+      </div>
+    </footer>
+
+  </div><!-- / #app -->
+
+
+  <!-- ============ TOAST CONTAINER ============ -->
+  <div class="toast-container" id="toast-container"></div>
+
+
+  <!-- ============ AUTH MODAL ============ -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal">
+      <div class="modal__title">Welcome Back</div>
+      <input class="modal__input" type="text" id="auth-username" placeholder="Username" />
+      <input class="modal__input" type="password" id="auth-password" placeholder="Password" />
+      <button class="modal__submit" id="auth-submit">Sign In</button>
+      <p style="text-align:center; margin-top:12px; font-size:0.75rem; color:var(--text-muted)">
+        No account? <a href="#" id="auth-toggle" style="color:var(--cyan)">Register</a>
+      </p>
+    </div>
+  </div>
+
+
+  <!-- ============ MediaPipe Hands ============ -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
+  <!-- ============ JS MODULES ============ -->
+  <!-- App entry point — loads last, orchestrates all modules -->
+  <script src="js/utils.js"></script>
+  <script src="js/canvas.js"></script>
+  <script src="js/hand-tracking.js"></script>
+  <script src="js/preprocessing.js"></script>
+  <script src="js/recognition.js"></script>
+  <script src="js/expression-builder.js"></script>
+  <script src="js/solver.js"></script>
+  <script src="js/plotter.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>
