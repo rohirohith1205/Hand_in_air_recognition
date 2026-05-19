@@ -1,7 +1,8 @@
 /* ============================================================
-   app.js — Main Application Orchestrator (Steps 1-4)
+   app.js — Main Application Orchestrator (Steps 1-8)
    ============================================================
-   Initializes UI, CanvasManager, HandTracker, Preprocessor.
+   Initializes UI, CanvasManager, HandTracker, Preprocessor,
+   Recognition, ExpressionBuilder, Solver, and Plotter.
    ============================================================ */
 
 const App = (() => {
@@ -195,17 +196,76 @@ const App = (() => {
             // Show the 28×28 debug preview
             Preprocessor.showDebugPreview(result.preview);
 
-            // Log the processed data
-            console.log('Preprocessed:', {
-                floatArrayLength: result.floatArray.length,
-                bbox: result.bbox,
-                sampleValues: Array.from(result.floatArray.slice(0, 10))
-            });
+            // Step 5: Run AI prediction on the preprocessed image
+            if (Recognition.isReady()) {
+                const prediction = Recognition.predict(result.floatArray);
+                if (prediction) {
+                    Recognition.updatePredictionUI(prediction);
 
-            Utils.showToast('Drawing preprocessed (28×28)', 'success');
+                    // Step 6: Add predicted character to expression
+                    ExpressionBuilder.addChar(prediction.label, prediction.confidence);
 
-            // TODO Step 5: Pass result.floatArray to Recognition module
-            // Recognition.predict(result.floatArray);
+                    console.log('🧠 Prediction:', prediction.label,
+                        `(${(prediction.confidence * 100).toFixed(1)}%)`);
+                    Utils.showToast(
+                        `Predicted: ${prediction.label} (${(prediction.confidence * 100).toFixed(1)}%)`,
+                        'success'
+                    );
+
+                    // Auto-clear canvas after capturing character
+                    CanvasManager.clear();
+                    Preprocessor.hideDebugPreview();
+                }
+            } else {
+                Utils.showToast('AI Model not ready — train first!', 'error');
+            }
+        });
+    }
+
+    /**
+     * Initialize expression control buttons (Backspace, Clear)
+     */
+    function initExpressionControls() {
+        // Backspace button
+        els.btnBackspace.addEventListener('click', () => {
+            ExpressionBuilder.backspace();
+        });
+
+        // Clear expression button
+        els.btnClearExpr.addEventListener('click', () => {
+            ExpressionBuilder.clear();
+        });
+    }
+
+    /**
+     * Initialize Solve and Plot buttons (Steps 7 & 8)
+     */
+    function initSolvePlot() {
+        // Solve button
+        els.btnSolve.addEventListener('click', () => {
+            // Get expression from the input field or expression builder
+            const input = els.equationInput.value.trim()
+                || ExpressionBuilder.getEvalString();
+
+            if (!input) {
+                Utils.showToast('Nothing to solve — enter an expression first!', 'error');
+                return;
+            }
+
+            Solver.solve(input);
+        });
+
+        // Plot button
+        els.btnPlot.addEventListener('click', () => {
+            const input = els.equationInput.value.trim()
+                || ExpressionBuilder.getEvalString();
+
+            if (!input) {
+                Utils.showToast('Nothing to plot — enter an expression first!', 'error');
+                return;
+            }
+
+            Plotter.plotFromInput(input);
         });
     }
 
@@ -244,6 +304,8 @@ const App = (() => {
         initHeaderActions();
         initFooter();
         initPredictButton();
+        initExpressionControls();
+        initSolvePlot();
         initAuth();
 
         // Initialize CanvasManager
@@ -251,6 +313,18 @@ const App = (() => {
 
         // Initialize HandTracker
         HandTracker.init();
+
+        // Initialize Recognition (TensorFlow.js AI)
+        Recognition.init();
+
+        // Initialize ExpressionBuilder (Step 6)
+        ExpressionBuilder.init();
+
+        // Initialize Solver (Step 7)
+        Solver.init();
+
+        // Initialize Plotter (Step 8)
+        Plotter.init();
 
         // Try to restore previously saved drawing
         CanvasManager.loadSaved();
@@ -267,7 +341,7 @@ const App = (() => {
         // Render Lucide icons
         if (window.lucide) lucide.createIcons();
 
-        console.log('🖐️ Hand-in-Air — App initialized (Step 4: Preprocessing ready)');
+        console.log('🖐️ Hand-in-Air — App initialized (Steps 1-8 complete)');
         Utils.showToast('Hand-in-Air is ready!', 'success');
     }
 
